@@ -1,17 +1,46 @@
 #!/bin/bash
+CYAN='\033[0;36m'
+LIGHT_CYAN='\033[1;36m'
+WHITE='\033[1;37m'
+RED='\033[1;31m'
+NC='\033[0m'
 if [ -z "$1" ] ; then
-    echo "No app name was given. Halting"
+    echo -e "${RED}No app name was given. Halting"
     exit 1
 fi
+echo -e "${RED} _                               _ "
+echo -e "${RED}| |                             | |"
+echo -e "${RED}| |     __ _ _ __ __ ___   _____| |"
+echo -e "${RED}| |    / _\` | '__/ _\` \ \ / / _ \ |"
+echo -e "${RED}| |___| (_| | | | (_| |\ V /  __/ |"
+echo -e "${RED}|______\__,_|_|  \__,_| \_/ \___|_|"
+echo ""
 set -- ${1// /_} # replace spaces in first argument
-curl -s https://laravel.build/example-app | bash
-if [ ! -d "./example-app" ] ; then
-    echo "Project is not created. Halting"
+# EDITED LARAVEL BUILD SCRIPT FROM https://laravel.build/example-app
+docker info > /dev/null 2>&1
+# Ensure that Docker is running...
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Docker is not running."
     exit 1
 fi
-mv ./example-app ./$1
-cd ./$1
-sed -i "s/\(DB_DATABASE *= *\).*/\1$1/" ./.env # replace DB_DATABSE value in .env file with first argument
+echo -e "${WHITE}Creating project, please wait..."
+# USING PHP 7.4. Switch to 8.0: laravelsail/php80-composer:latest
+docker run --rm \
+    -v $(pwd):/opt \
+    -w /opt \
+    laravelsail/php74-composer:latest \
+    bash -c "laravel new ${1} && cd ${1} && php ./artisan sail:install --with=mysql,redis,meilisearch,mailhog,selenium" > /dev/null 2>&1
+cd ${1}
+echo "Project created!"
+if sudo -n true 2>/dev/null; then
+    sudo chown -R $USER: .
+else
+    echo -e "${WHITE}Please provide your password so we can make some final adjustments to your application's permissions.${NC}"
+    sudo chown -R $USER: .
+fi
+sed -i "s/\(DB_USERNAME *= *\).*/\1root/" ./.env # replace DB_USERNAME value in .env file to `root`
+echo -e "${WHITE}Recreating docker-compose.yml..."
+# REWRITING docker-compose.yml
 cat << EOF > docker-compose.yml
 # For more information: https://laravel.com/docs/sail
 version: '3'
@@ -115,4 +144,9 @@ volumes:
     sailmeilisearch:
         driver: local
 EOF
-./vendor/bin/sail build
+# END REWRITING
+echo -e "${WHITE}Building sail..."
+./vendor/bin/sail build > /dev/null 2>&1
+echo -e "${LIGHT_CYAN}Thank you! We hope you build something incredible."
+echo -e "${LIGHT_CYAN}Dive in with:${NC} cd ${1} && ./vendor/bin/sail up -d"
+# END SCRIPT
