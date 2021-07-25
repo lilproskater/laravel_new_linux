@@ -24,3 +24,19 @@ laravel_new <project_name>
 cd <project_name>
 ./vendor/bin/sail up -d
 ```
+
+## Accessing Project
+```
+http://localhost
+```
+
+## Accessing PhpMyAdmin
+```
+http://localhost:8080
+```
+
+## MySQL
+```
+username: sail/root
+password: password
+```
