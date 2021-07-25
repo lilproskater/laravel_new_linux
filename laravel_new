@@ -38,7 +38,7 @@ else
     echo -e "${WHITE}Please provide your password so we can make some final adjustments to your application's permissions.${NC}"
     sudo chown -R $USER: .
 fi
-sed -i "s/\(DB_USERNAME *= *\).*/\1root/" ./.env # replace DB_USERNAME value in .env file to `root`
+# sed -i "s/\(ENV_KEY *= *\).*/\1ENV_VALUE/" ./.env # replace ENV_KEY value to ENV_VALUE in .env file
 echo -e "${WHITE}Recreating docker-compose.yml..."
 # REWRITING docker-compose.yml
 cat << EOF > docker-compose.yml
